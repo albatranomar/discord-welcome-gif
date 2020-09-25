@@ -1,0 +1,18 @@
+{
+  "name": "discord-welcome-gif",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/albatranomar/discord-welcome-gif.git"
+  },
+  "author": "Omar Albatran",
+  "bugs": {
+    "url": "https://github.com/albatranomar/discord-welcome-gif/issues"
+  },
+  "homepage": "https://github.com/albatranomar/discord-welcome-gif#readme"
+}
