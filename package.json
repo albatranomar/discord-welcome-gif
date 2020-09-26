@@ -14,5 +14,11 @@
   "bugs": {
     "url": "https://github.com/albatranomar/discord-welcome-gif/issues"
   },
-  "homepage": "https://github.com/albatranomar/discord-welcome-gif#readme"
+  "homepage": "https://github.com/albatranomar/discord-welcome-gif#readme",
+  "dependencies": {
+    "canvas": "^2.6.1",
+    "discord.js": "^12.3.1",
+    "gif-frames": "^1.0.1",
+    "gifencoder": "^2.0.1"
+  }
 }
