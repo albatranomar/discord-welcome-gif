@@ -1,52 +1,77 @@
-const config = require('./config');
+require('dotenv').config();
 const Discord = require('discord.js');
-const client = new Discord.Client();
-const gifCreator = require('./src/gif-creator');
+const path = require('path');
+const canvasGif = require('canvas-gif');
+const editor = require("editor-canvas");
+const { loadImage } = require('canvas');
 
-client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+let client = new Discord.Client({
+  intents: [
+    'MessageContent',
+    'GuildMessages',
+    'GuildMembers',
+    'Guilds',
+    'GuildMessages'
+  ]
 });
 
-client.on('message', message => {
-  if (message.guild && message.content === 'join' && message.member.hasPermission('ADMINISTRATOR')) {
+client.once('ready', readyClient => {
+  client = readyClient;
+
+  console.log(`WE ARE ON.`);
+})
+
+client.on('messageCreate', message => {
+  if (message.author.id == '349124522747887616' && message.content == 'join') {
+    console.log('Joinning....');
     client.emit('guildMemberAdd', message.member);
   }
 });
 
 client.on('guildMemberAdd', async member => {
-  const channel = member.guild.channels.cache.find(ch => ch.id === '514798095536488459');
-  if (!channel) return console.log(`Cannot find channel`);
+  let avatar = await loadImage(member.user.displayAvatarURL({ extension: 'png' }));
+  let imageLocation = {
+    x: 87,
+    y: 60,
+    radius: 105
+  }
+  let buffer = await canvasGif(
+    path.resolve(__dirname, 'welcome.gif'),
+    async (ctx, width, height, totalFrames, currentFrame) => {
+      // ctx.font = '40px sans-serif';
+      ctx.font = editor.resizeText(ctx, {
+        text: member.user.username,
+        font: 40,
+        width: 150
+      }) + '';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(member.user.username.slice(0, currentFrame), 296, 220)
 
-  let gif = new gifCreator(`https://cdn.discordapp.com/attachments/752221897860841526/757937439800033290/Untitled_design_-_2020-09-22T151241.218.gif`, {
-    width: 1440, height: 810, isRepeated: true
-  });
-
-  let a = await gif.init();
-
-  await gif.editFrame('all', async (ctx, fw, fh, Canvas) => {
-    return new Promise(async (res, rej) => {
       ctx.beginPath();
-      ctx.arc(500 + 200, 250 + 200, 200, 0, Math.PI * 2, true);
+      ctx.arc(imageLocation.x + imageLocation.radius, imageLocation.y + imageLocation.radius, imageLocation.radius, 0, Math.PI * 2, true);
       ctx.stroke();
       ctx.closePath();
       ctx.clip();
 
-      let avatar = await Canvas.loadImage(member.user.displayAvatarURL({ format: 'jpg' }));
-      ctx.drawImage(avatar, 500, 250, 400, 400);
-      res(null);
-    });
-  });
+      ctx.drawImage(avatar, imageLocation.x, imageLocation.y, imageLocation.radius * 2, imageLocation.radius * 2);
+    },
+    {
+      coalesce: false, // whether the gif should be coalesced first, default: false
+      delay: 0, // the delay between each frame in ms, default: 0
+      algorithm: 'neuquant', // the algorithm the encoder should use, default: 'neuquant',
+      optimiser: true, // whether the encoder should use the in-built optimiser, default: false,
+      fps: 15, // the amount of frames to render per second, default: 60
+      quality: 100, // the quality of the gif, a value between 1 and 100, default: 100
+    }
+  );
 
-  let finle = await gif.out();
+  let channel = await client.channels.fetch('823797907026214953');
 
-  await channel.send(`Welcome to the server ${member}`, {
-    files: [
-      {
-        attachment: finle,
-        name: 'Welcome.gif'
-      }
-    ]
-  });
+  if (channel && channel.isTextBased()) {
+    const attachment = new Discord.AttachmentBuilder(buffer, { name: 'welcome.gif' });
+
+    channel.send({ files: [attachment] });
+  }
 });
 
-client.login(config.discord.bot.token);
+client.login(process.env.TOKEN);
